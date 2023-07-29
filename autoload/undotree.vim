@@ -352,6 +352,8 @@ function! s:undotree.BindAu() abort
                     \let t:undotree.width = winwidth(winnr()) | endif
         au BufWinLeave <buffer> if exists('t:diffpanel') |
                     \call t:diffpanel.Hide() | endif
+        au! CursorMoved <buffer> if exists('t:diffpanel') |
+                    \call t:diffpanel.Update(t:undotree.GetCurrentLineSeq(),t:undotree.targetBufnr,t:undotree.targetid) | endif
     augroup end
 endfunction
 
@@ -396,20 +398,28 @@ function! s:undotree.ActionFocusTarget() abort
     call self.SetTargetFocus()
 endfunction
 
-function! s:undotree.ActionEnter() abort
+function! s:undotree.GetCurrentLineSeq() abort
     let index = self.Screen2Index(line('.'))
     if index < 0
-        return
+        return -1
     endif
     let seq = self.asciimeta[index].seq
     if seq == -1
         return
     endif
     if seq == 0
-        call self.ActionInTarget('norm 9999u')
-        return
+        return seq
     endif
-    call self.ActionInTarget('u '.self.asciimeta[index].seq)
+    return self.asciimeta[index].seq
+endfunction
+
+function! s:undotree.ActionEnter() abort
+    let seq = self.GetCurrentLineSeq()
+    if seq == 0
+        call self.ActionInTarget('norm 9999u')
+    elseif seq > 0
+        call self.ActionInTarget('u '.seq)
+    endif
 endfunction
 
 function! s:undotree.ActionUndo() abort
@@ -1057,7 +1067,7 @@ let s:diffpanel = s:new(s:panel)
 
 function! s:diffpanel.Update(seq,targetBufnr,targetid) abort
     call s:log('diffpanel.Update(),seq:'.a:seq.' bufname:'.bufname(a:targetBufnr))
-    if !self.diffexecutable
+    if !self.diffexecutable || a:seq < 0
         return
     endif
     let diffresult = []
@@ -1091,10 +1101,12 @@ function! s:diffpanel.Update(seq,targetBufnr,targetid) abort
             " remember and restore cursor and window position.
             let savedview = winsaveview()
 
+            let seq_cur = undotree().seq_cur
+            silent exec 'undo '.a:seq
             let new = getbufline(a:targetBufnr,'^','$')
             silent undo
             let old = getbufline(a:targetBufnr,'^','$')
-            silent redo
+            silent exec 'undo '.seq_cur
 
             call winrestview(savedview)
 
