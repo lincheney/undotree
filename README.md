@@ -105,10 +105,12 @@ if has("persistent_undo")
     set undofile
 endif
 ```
+     * Alternatively, if you wish to persist the undo history for a currently
+       open file only, you can use the `:UndotreePersistUndo` command.
 
 #### Configuration
 
-[Here](https://github.com/mbbill/undotree/blob/master/plugin/undotree.vim#L15) is a list of options.
+[Here](https://github.com/mbbill/undotree/blob/master/plugin/undotree.vim#L27) is a list of options.
 
 #### Debug
 
