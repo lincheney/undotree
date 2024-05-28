@@ -405,7 +405,7 @@ function! s:undotree.GetCurrentLineSeq() abort
     endif
     let seq = self.asciimeta[index].seq
     if seq == -1
-        return
+        return -1
     endif
     if seq == 0
         return seq
